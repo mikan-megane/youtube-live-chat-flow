@@ -309,44 +309,51 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 logger.log('content script loaded')
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      const nodes = Array.from(mutation.addedNodes)
-      nodes.forEach((node) => {
-        flow(node)
+  const interval = setInterval(() => {
+    const items = document.querySelector('#items.yt-live-chat-item-list-renderer')
+    if (items === null) {
+      return
+    }
+    clearInterval(interval)
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        const nodes = Array.from(mutation.addedNodes)
+        nodes.forEach((node) => {
+          flow(node)
+        })
       })
     })
+    observer.observe(items, { childList: true })
+
+    const callback = (e) => {
+      lines
+        .reduce(
+          (carry, messages) => [
+            ...carry,
+            ...messages.map((message) => message.animation)
+          ],
+          []
+        )
+        .forEach((animation) => animation[e.type]())
+    }
+    const video = parent.document.querySelector('.video-stream.html5-main-video')
+    video.addEventListener('pause', callback)
+    video.addEventListener('play', callback)
+
+    window.addEventListener('unload', () => {
+      clearMessages()
+
+      video.removeEventListener('pause', callback)
+      video.removeEventListener('play', callback)
+
+      observer.disconnect()
+
+      removeControlButton()
+    })
+
+    setupControlButton()
+
+    chrome.runtime.sendMessage({ id: 'contentLoaded' })
   })
-  const items = document.querySelector('#items.yt-live-chat-item-list-renderer')
-  observer.observe(items, { childList: true })
-
-  const callback = (e) => {
-    lines
-      .reduce(
-        (carry, messages) => [
-          ...carry,
-          ...messages.map((message) => message.animation)
-        ],
-        []
-      )
-      .forEach((animation) => animation[e.type]())
-  }
-  const video = parent.document.querySelector('.video-stream.html5-main-video')
-  video.addEventListener('pause', callback)
-  video.addEventListener('play', callback)
-
-  window.addEventListener('unload', () => {
-    clearMessages()
-
-    video.removeEventListener('pause', callback)
-    video.removeEventListener('play', callback)
-
-    observer.disconnect()
-
-    removeControlButton()
-  })
-
-  setupControlButton()
-
-  chrome.runtime.sendMessage({ id: 'contentLoaded' })
 })
