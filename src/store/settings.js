@@ -12,10 +12,10 @@ export const defaults = {
   selfColor: '#ff6666',
   selfAvatar: true,
   opacity: '0.8',
-  rows: '12',
+  rows: '15',
   speed: '5',
   overflow: 'hidden',
-  extendedStyle: 'text-shadow: 1px 1px 2px #333;'
+  extendedStyle: 'text-shadow: 1px 1px 2px #333; font-weight:normal;'
 }
 
 export default {
